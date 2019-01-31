@@ -1,7 +1,7 @@
 /**
  * To fuzzy match EventBrite data with db of users, b/c they didn't use .edu emails
  * NOTE: won't need if we ask for phone nums in EventBrite which is unique
- * 
+ * remember to npm i the requisite npm modules!
  * Written 11/4/2018 by Ben Cooper and Kwuang Tang
  */
 
