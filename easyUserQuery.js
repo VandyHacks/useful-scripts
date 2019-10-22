@@ -6,23 +6,34 @@
  * 
  */
 
-const DB_DUMP_FILE = './2018-11-02_users.json'; // mongo db JSON dump
-const OUTPUT_FILE = 'bus.csv';
+const DB_DUMP_FILE = '../db-10-21.json'; // mongo db JSON dump
+const OUTPUT_FILE = 'accepted.csv';
 let { convertMongoDumpToArray, writeUsersToFile } = require('./queryUtils.js');
 
 // Define to JSON type
 const users = convertMongoDumpToArray(DB_DUMP_FILE);
 console.log('current time: ' + (new Date()))
 
+const STATUS = {
+    Created: 'CREATED',
+    Verified: 'VERIFIED',
+    Started: 'STARTED',
+    Submitted: 'SUBMITTED',
+    Accepted: 'ACCEPTED',
+    Confirmed: 'CONFIRMED',
+    Rejected: 'REJECTED'
+}
+
 // status filters
-const NOT_DECLINED = e => !e.status.declined;
-const SUBMITTED = e => e.status.completedProfile;
-const ADMITTED = e => e.status.admitted;
-const CONFIRMED = e => e.status.confirmed;
+const CREATED = e => e.status === STATUS.Created;
+const STARTED = e => e.status === STATUS.Started;
+const SUBMITTED = e => e.status === STATUS.Submitted;
+const ADMITTED = e => e.status === STATUS.Accepted;
+const CONFIRMED = e => e.status === STATUS.Confirmed;
 
 // for sending reminder emails:
-const VERIFIED_NOT_SUBMITTED = e => e.verified && !e.status.completedProfile;
-const ADMITTED_NOT_CONFIRMED = e => e.status.admitted && !e.status.confirmed;
+// const VERIFIED_NOT_SUBMITTED = e => e.verified && !e.status.completedProfile;
+// const ADMITTED_NOT_CONFIRMED = e => e.status.admitted && !e.status.confirmed;
 
 // returns a lambda that filters by school emails
 const schoolFilter = (schoolEmailEndings) => {
@@ -39,40 +50,37 @@ const schoolFilter = (schoolEmailEndings) => {
 
 // chain filters
 let results = users
-    .filter(NOT_DECLINED) // always filter by ppl that didn't decline
-    // .filter(VERIFIED_NOT_SUBMITTED) // all verified + not submitted
-    // .filter(ADMITTED_NOT_CONFIRMED) // all admitted + not confirmed
-    .filter(SUBMITTED)
+    .filter(ADMITTED)
     // .filter(schoolFilter(['wustl.edu']))
     // .filter(schoolFilter(['duke.edu', 'wfu.edu', 'unc.edu']))
     /*.filter(schoolFilter(['hawk.iit.edu', 'loyola.edu', 'northwestern.edu', 'uchicago.edu', 'illinois.edu', 'uic.edu',
 'purdue.edu', 'gatech.edu', 'ufl.edu', 'knights.ucf.edu', 'mst.edu', 'wustl.edu', 'emory.edu', 'uga.edu', 'fsu.edu']))*/
     .filter(e => {
-    
-    /* for custom filters */
 
-    // for sending out emails to eventbrite for bus rsvp 
-    // return e.email.endsWith('.edu') && !e.email.endsWith('vanderbilt.edu');
+        /* for custom filters */
 
-    // Get admitted on LATEST ROUND
-    // change the date (unix millis, each time)
-    // return new Date(e.status.admittedOn) > new Date(1540904400000) //https://currentmillis.com/
+        // for sending out emails to eventbrite for bus rsvp 
+        // return e.email.endsWith('.edu') && !e.email.endsWith('vanderbilt.edu');
 
-    // get longest essays
-    // return e.profile.essay && e.profile.essay.length > 2000;
+        // Get admitted on LATEST ROUND
+        // change the date (unix millis, each time)
+        // return new Date(e.status.admittedOn) > new Date(1540904400000) //https://currentmillis.com/
 
-    // ppl that need travel reimburse
-    // return e.confirmation.needsReimbursement;
-    
-    // volunteers
-    // return e.profile.volunteer
+        // get longest essays
+        // return e.profile.essay && e.profile.essay.length > 2000;
 
-    // lightning talks
-    // return e.confirmation.lightningTalker;
-    // return e.profile.mentor_accepted;
-    return e.status.hasBusTicket
-    return true;
-})
+        // ppl that need travel reimburse
+        // return e.confirmation.needsReimbursement;
+
+        // volunteers
+        // return e.profile.volunteer
+
+        // lightning talks
+        // return e.confirmation.lightningTalker;
+        // return e.profile.mentor_accepted;
+        // return e.status.hasBusTicket
+        return true;
+    })
 
 let cnt = 0
 // What info to get from each user
@@ -89,7 +97,8 @@ results = results.map(u => {
         name = u.profile.name;
     return [u.email, name];*/
     // return [u.email, u.profile.name, u.profile.lastResumeName, u.status.confirmed ? 'YES' : 'NO'];
-    return [u.profile.school, u.confirmation.phoneNumber || '']
+    // return [u.profile.school, u.confirmation.phoneNumber || '']
+    return [u.email]
 });
 
 console.log(results.length + ' filtered users.')
