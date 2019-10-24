@@ -41,12 +41,6 @@ const HAS_SUBMITTED = e => e.status === STATUS.Submitted
 // const VERIFIED_NOT_SUBMITTED = e => e.verified && !e.status.completedProfile;
 // const ADMITTED_NOT_CONFIRMED = e => e.status.admitted && !e.status.confirmed;
 
-// associate app questions with users
-
-
-
-
-
 // returns a lambda that filters by school emails
 const schoolFilter = (schoolEmailEndings) => {
     return e => {
@@ -60,11 +54,12 @@ const schoolFilter = (schoolEmailEndings) => {
     }
 }
 
+// associate app questions with users
 let newUsers = associateResponsesWithUser(apps, users);
 console.log(newUsers[0])
 
 // chain filters
-let results = users
+let results = newUsers
     .filter(HAS_SUBMITTED)
     // .filter(schoolFilter(['wustl.edu']))
     // .filter(schoolFilter(['duke.edu', 'wfu.edu', 'unc.edu']))
@@ -93,34 +88,27 @@ let results = users
         // lightning talks
         // return e.confirmation.lightningTalker;
         // return e.profile.mentor_accepted;
-        // return e.status.hasBusTicket
-        return true;
+        return e.app.travelInfoSharingConsent === 'Yes'
+
+        // return true;
     })
 
-results = []
+// results = []
 
-let cnt = 0
-// What info to get from each user
+// Some sorting...
+results.sort((a, b) => a.school.toLowerCase().localeCompare(b.school.toLowerCase()))
+// console.log(results)
+// Extract info from each user
 results = results.map(u => {
-    // return [u.profile.name, u.email, u.confirmation.phoneNumber, u.profile.school]
-    // return u.email
-    // return [u.email, u.profile.essay]
-    /*let name = u.profile.name.split(' ');
-    if (name.length === 2) {
-        name = name[0];
-        cnt += 1
-    }
-    else
-        name = u.profile.name;
-    return [u.email, name];*/
-    // return [u.email, u.profile.name, u.profile.lastResumeName, u.status.confirmed ? 'YES' : 'NO'];
-    // return [u.profile.school, u.confirmation.phoneNumber || '']
-    return [u.email]
+    return [u.school, u.email]
 });
 
+
+console.log(results)
+
+
 console.log(results.length + ' filtered users.')
-console.log(results);
-console.log(cnt)
+// console.log(results);
 
 writeUsersToFile(results, OUTPUT_FILE);
 
