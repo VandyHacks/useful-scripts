@@ -6,12 +6,14 @@
  * 
  */
 
-const DB_DUMP_FILE = '../db-10-21.json'; // mongo db JSON dump
+const DB_DUMP_FILE = '../dbdump-10-24.json'; // mongo db JSON dump
+const APP_QUESTIONS_FILE = '../appquestions-10-24.json' // application questions
 const OUTPUT_FILE = 'accepted.csv';
-let { convertMongoDumpToArray, writeUsersToFile } = require('./queryUtils.js');
+let { convertMongoDumpToArray, writeUsersToFile, associateResponsesWithUser } = require('./queryUtils.js');
 
 // Define to JSON type
 const users = convertMongoDumpToArray(DB_DUMP_FILE);
+const apps = convertMongoDumpToArray(APP_QUESTIONS_FILE);
 console.log('current time: ' + (new Date()))
 
 const STATUS = {
@@ -31,9 +33,19 @@ const SUBMITTED = e => e.status === STATUS.Submitted;
 const ADMITTED = e => e.status === STATUS.Accepted;
 const CONFIRMED = e => e.status === STATUS.Confirmed;
 
+const HAS_SUBMITTED = e => e.status === STATUS.Submitted
+    || e.status === STATUS.Accepted
+    || e.status === STATUS.Confirmed
+
 // for sending reminder emails:
 // const VERIFIED_NOT_SUBMITTED = e => e.verified && !e.status.completedProfile;
 // const ADMITTED_NOT_CONFIRMED = e => e.status.admitted && !e.status.confirmed;
+
+// associate app questions with users
+
+
+
+
 
 // returns a lambda that filters by school emails
 const schoolFilter = (schoolEmailEndings) => {
@@ -48,9 +60,12 @@ const schoolFilter = (schoolEmailEndings) => {
     }
 }
 
+let newUsers = associateResponsesWithUser(apps, users);
+console.log(newUsers[0])
+
 // chain filters
 let results = users
-    .filter(ADMITTED)
+    .filter(HAS_SUBMITTED)
     // .filter(schoolFilter(['wustl.edu']))
     // .filter(schoolFilter(['duke.edu', 'wfu.edu', 'unc.edu']))
     /*.filter(schoolFilter(['hawk.iit.edu', 'loyola.edu', 'northwestern.edu', 'uchicago.edu', 'illinois.edu', 'uic.edu',
@@ -81,6 +96,8 @@ let results = users
         // return e.status.hasBusTicket
         return true;
     })
+
+results = []
 
 let cnt = 0
 // What info to get from each user

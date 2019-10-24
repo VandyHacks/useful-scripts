@@ -18,7 +18,7 @@ function convertMongoDumpToArray(filepath) {
   const arr = contents.split(delim).map(e => delim + e.trim());
   arr.shift(); // remove first elem
   const result = JSON.parse(`{ "data": [${arr.toString()}]}`).data;
-  console.log(result.length + ' total records.');
+  console.log(result.length + ' total records in ' + filepath);
   return result;
 }
 
@@ -39,7 +39,40 @@ function writeUsersToFile(users, outputFileName) {
   });
 }
 
+/**
+ * Associates application responses with their user
+ * Returns new list of users
+ * @param {Array} responses 
+ * @param {Array} users 
+ */
+function associateResponsesWithUser(responses, users) {
+  const usersMap = {}
+  users.forEach(u => {
+    const UID = u._id['$oid']
+    usersMap[UID] = u
+  })
+  console.log('Created users map.')
+
+  let numOrphaned = 0
+  responses.forEach(a => {
+    const author = usersMap[a.userId['$oid']]
+    // NOTE: there are some questions that don't belong to anyone if their user was deleted...
+    if (author) {
+      if (!author.app)
+        author.app = {}
+      author.app[a.question] = a.answer
+    }
+    else {
+      numOrphaned += 1
+    }
+  })
+  console.log('Associated users with application questions.')
+  console.log(`${numOrphaned} questions orphaned.`)
+  return Object.values(usersMap)
+}
+
 module.exports = {
   convertMongoDumpToArray,
-  writeUsersToFile
+  writeUsersToFile,
+  associateResponsesWithUser
 };
