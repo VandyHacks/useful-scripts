@@ -6,9 +6,9 @@
  * 
  */
 
-const DB_DUMP_FILE = '../dbdump-10-24.json'; // mongo db JSON dump
-const APP_QUESTIONS_FILE = '../appquestions-10-24.json' // application questions
-const OUTPUT_FILE = 'accepted.csv';
+const DB_DUMP_FILE = '../dbdump-10-28.json'; // mongo db JSON dump
+const APP_QUESTIONS_FILE = '../appquestions-10-28.json' // application questions
+const OUTPUT_FILE = 'out.csv';
 let { convertMongoDumpToArray, writeUsersToFile, associateResponsesWithUser } = require('./queryUtils.js');
 
 // Define to JSON type
@@ -18,7 +18,6 @@ console.log('current time: ' + (new Date()))
 
 const STATUS = {
     Created: 'CREATED',
-    Verified: 'VERIFIED',
     Started: 'STARTED',
     Submitted: 'SUBMITTED',
     Accepted: 'ACCEPTED',
@@ -36,6 +35,8 @@ const CONFIRMED = e => e.status === STATUS.Confirmed;
 const HAS_SUBMITTED = e => e.status === STATUS.Submitted
     || e.status === STATUS.Accepted
     || e.status === STATUS.Confirmed
+
+const ACCEPTED_OR_CONFIRMED = e => e.status === STATUS.Accepted || e.status === STATUS.Confirmed
 
 // for sending reminder emails:
 // const VERIFIED_NOT_SUBMITTED = e => e.verified && !e.status.completedProfile;
@@ -56,15 +57,16 @@ const schoolFilter = (schoolEmailEndings) => {
 
 // associate app questions with users
 let newUsers = associateResponsesWithUser(apps, users);
-console.log(newUsers[0])
+// console.log(newUsers[0])
 
 // chain filters
 let results = newUsers
-    .filter(HAS_SUBMITTED)
+    // .filter(HAS_SUBMITTED)
     // .filter(schoolFilter(['wustl.edu']))
     // .filter(schoolFilter(['duke.edu', 'wfu.edu', 'unc.edu']))
     /*.filter(schoolFilter(['hawk.iit.edu', 'loyola.edu', 'northwestern.edu', 'uchicago.edu', 'illinois.edu', 'uic.edu',
 'purdue.edu', 'gatech.edu', 'ufl.edu', 'knights.ucf.edu', 'mst.edu', 'wustl.edu', 'emory.edu', 'uga.edu', 'fsu.edu']))*/
+    // .filter(e => e.app.volunteer === 'Yes')
     .filter(e => {
 
         /* for custom filters */
@@ -82,25 +84,36 @@ let results = newUsers
         // ppl that need travel reimburse
         // return e.confirmation.needsReimbursement;
 
-        // volunteers
-        // return e.profile.volunteer
-
         // lightning talks
         // return e.confirmation.lightningTalker;
         // return e.profile.mentor_accepted;
-        return e.app.travelInfoSharingConsent === 'Yes'
-
-        // return true;
+        // return e.app.travelInfoSharingConsent === 'Yes'
+        // if (e.school && e.school !== 'Vanderbilt University')
+        //     console.log(e.email)
+        // return e.school && e.school !== 'Vanderbilt University'
+        // return e.app.dietaryRestrictions && e.app.dietaryRestrictions.toLowerCase().indexOf('glut') > -1
+        return true;
     })
 
 // results = []
 
 // Some sorting...
-results.sort((a, b) => a.school.toLowerCase().localeCompare(b.school.toLowerCase()))
+// results.sort((a, b) => a.school.toLowerCase().localeCompare(b.school.toLowerCase()))
 // console.log(results)
 // Extract info from each user
+
+var fs = require('fs');
 results = results.map(u => {
-    return [u.school, u.email]
+    // return [u.app.dietaryRestrictions]
+    if (!u.firstName || !u.lastName || !u.school)
+        return
+    fs.rename(`../resumes/${u._id.$oid}`, `../resumes/${u.firstName + ' ' + u.lastName + ' ' + u.school}.pdf`, function (err) {
+        if (err) console.log('ERROR: ' + err);
+    });
+
+    return [u.firstName, u.lastName, u.app && u.app.resume, JSON.stringify(u._id)]
+    // return [u.email]
+    // return [u.firstName, u.lastName, u.school, u.phoneNumber, u.email]
 });
 
 
