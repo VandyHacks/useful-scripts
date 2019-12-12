@@ -33,6 +33,12 @@ async function foo(arr, offset) {
   for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
     const startTime = new Date();
     const res = await fetch(BASE_URL);
+
+    // const body = {
+    //   user: users[i + USER_OFFSET]._id,
+    //   event: events[i + EVENT_OFFSET + offset]
+    // };
+
     if (!res.ok) console.error(res.error);
     else console.log("Successfully hit");
     arr.push(startTime - new Date());
@@ -48,6 +54,9 @@ foo(latencies, 0).then(() => {
       promises.push(
         (async function() {
           const res = await fetch(BASE_URL);
+          // Make sure you add a "2" offset to the event here.
+
+
           if (!res.ok) console.error(`${res.status}`, res);
           else console.info("Success async!");
           arr.push(startTime - new Date());
