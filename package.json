@@ -1,0 +1,22 @@
+{
+  "name": "useful-scripts",
+  "version": "1.0.0",
+  "description": "A collection of useful scripts",
+  "main": "confirmDateGod.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VandyHacks/useful-scripts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VandyHacks/useful-scripts/issues"
+  },
+  "homepage": "https://github.com/VandyHacks/useful-scripts#readme",
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}
