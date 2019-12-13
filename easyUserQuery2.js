@@ -13,13 +13,15 @@ const EVENTS_FILE = "./dbdump-testdb-events-12-12.json";
 const USER_OFFSET = 0;
 const EVENT_OFFSET = 8;
 const BASE_URL =
-  "https://eh6irst8v7.execute-api.us-east-1.amazonaws.com/dev/hackers";
+  "http://vaken-staging.herokuapp.com/graphql";
 let { convertMongoDumpToArray } = require("./queryUtils.js");
 
 // Define to JSON type
 const users = convertMongoDumpToArray(DB_DUMP_FILE);
-const apps = convertMongoDumpToArray(APP_QUESTIONS_FILE);
+// const apps = convertMongoDumpToArray(APP_QUESTIONS_FILE);
 const events = JSON.parse(fs.readFileSync(EVENTS_FILE, "utf8"));
+
+const post = (url, body) => fetch(url, {method: 'POST', body: JSON.stringify(body)});
 
 console.log("current time: " + new Date());
 
@@ -32,7 +34,9 @@ const latencies = [],
 async function foo(arr, offset) {
   for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
     const startTime = new Date();
-    const res = await fetch(BASE_URL);
+    // const res = await fetch(BASE_URL);
+    const body = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
+    const res = await post(BASE_URL, body)
 
     // const body = {
     //   user: users[i + USER_OFFSET]._id,
@@ -53,7 +57,9 @@ foo(latencies, 0).then(() => {
     for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
       promises.push(
         (async function() {
-          const res = await fetch(BASE_URL);
+          const body = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
+          const res = await post(BASE_URL, body)
+          // const res = await fetch(BASE_URL);
           // Make sure you add a "2" offset to the event here.
 
 
@@ -74,5 +80,3 @@ foo(latencies, 0).then(() => {
     console.log(latencies);
   });
 });
-
-// NOTE: if needed, dedupe new list w/ prev list using http://www.listdiff.com/index
