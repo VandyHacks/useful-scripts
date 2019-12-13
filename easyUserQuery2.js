@@ -1,11 +1,6 @@
-/**
- *
- * Easily query users that match certain filters
- *
- * Written 11/4/2018 by Kwuang Tang
- *
+/*
+ * Benchmarking code for SERVER implementation
  */
-
 const fs = require("fs");
 const fetch = require("node-fetch");
 const DB_DUMP_FILE = "./dbdump-testdb-12-12.json"; // mongo db JSON dump
