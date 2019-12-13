@@ -26,14 +26,14 @@ const post = (url, body) => fetch(url, {method: 'POST', body: JSON.stringify(bod
 console.log("current time: " + new Date());
 
 function writeFile(arr, file) {
-  fs.writeFileSync(file, JSON.stringify(arr));
+  fs.writeFileSync(file, arr.join("\n"));
 }
 const latencies = [],
   latencies1000 = [],
   latenciesWarm = [];
 async function foo(arr, offset) {
   for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
-    const startTime = new Date();
+    const startTime = Date.now();
     // const res = await fetch(BASE_URL);
     const body = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
     const res = await post(BASE_URL, body)
@@ -45,14 +45,14 @@ async function foo(arr, offset) {
 
     if (!res.ok) console.error(res.error);
     else console.log("Successfully hit");
-    arr.push(startTime - new Date());
+    arr.push(Date.now() - startTime);
   }
 }
 
 foo(latencies, 0).then(() => {
   writeFile(latencies, "latenciesCold.csv");
   (async function(arr) {
-    const startTime = new Date();
+    const startTime = Date.now();
     const promises = [];
     for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
       promises.push(
@@ -65,7 +65,7 @@ foo(latencies, 0).then(() => {
 
           if (!res.ok) console.error(`${res.status}`, res);
           else console.info("Success async!");
-          arr.push(startTime - new Date());
+          arr.push(Date.now() - startTime);
         })()
       );
     }
