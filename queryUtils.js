@@ -1,5 +1,9 @@
 /*
  * A collection of useful utilities for querying Mongo dumps
+ * MIT Licensed 2019 by VandyHacks
+ *
+ * Written 10/24/2019 by Kwuang Tang
+ *
  */
 const fs = require("fs");
 
@@ -29,3 +33,8 @@ function writeUsersToFile(users, outputFileName) {
   const lines = users.map(e => (Array.isArray(e) ? e.join(", ") : e));
   fs.writeFileSync(outputFileName, lines.join("\n"));
 }
+
+module.exports = {
+  convertMongoDumpToArray,
+  writeUsersToFile
+};
