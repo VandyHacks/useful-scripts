@@ -29,14 +29,21 @@ const latencies = [],
 async function foo(arr, offset) {
   for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
     const startTime = Date.now();
-    // const res = await fetch(BASE_URL);
-    const body = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
-    const res = await post(BASE_URL, body)
+    
+    // const GETbody = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
+    // const res = await post(BASE_URL, GETbody)
 
-    // const body = {
-    //   user: users[i + USER_OFFSET]._id,
-    //   event: events[i + EVENT_OFFSET + offset]
-    // };
+    const userEventPair = {
+      user: users[i + USER_OFFSET]._id,
+      event: events[i + EVENT_OFFSET + offset]
+    };
+
+    const POSTbody = {
+      "operationName":"checkInUserToEvent",
+      "variables":{"input":userEventPair},
+      "query":"mutation checkInUserToEvent($input: EventCheckInInput!) {\n  checkInUserToEvent(input: $input) {\n    id\n  }\n}\n"
+    };
+    const res = await post(BASE_URL, POSTbody)
 
     if (!res.ok) console.error(res.error);
     else console.log("Successfully hit");
@@ -52,10 +59,23 @@ foo(latencies, 0).then(() => {
     for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
       promises.push(
         (async function() {
-          const body = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
-          const res = await post(BASE_URL, body)
-          // const res = await fetch(BASE_URL);
+
+          // const GETbody = {"operationName":null,"variables":{},"query":"{\n  hackers {\n    email\n  }\n}\n"}
+          // const res = await post(BASE_URL, GETbody)
+
+
           // Make sure you add a "2" offset to the event here.
+          const userEventPair = {
+            user: users[i + USER_OFFSET]._id,
+            event: events[i + EVENT_OFFSET + 1]
+          };
+
+          const POSTbody = {
+            "operationName":"checkInUserToEvent",
+            "variables":{"input":userEventPair},
+            "query":"mutation checkInUserToEvent($input: EventCheckInInput!) {\n  checkInUserToEvent(input: $input) {\n    id\n  }\n}\n"
+          };
+          const res = await post(BASE_URL, POSTbody)
 
 
           if (!res.ok) console.error(`${res.status}`, res);
