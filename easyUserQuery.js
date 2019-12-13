@@ -24,14 +24,14 @@ const events = JSON.parse(fs.readFileSync(EVENTS_FILE, "utf8"));
 console.log("current time: " + new Date());
 
 function writeFile(arr, file) {
-  fs.writeFileSync(file, JSON.stringify(arr));
+  fs.writeFileSync(file, arr.join("\n"));
 }
 const latencies = [],
   latencies1000 = [],
   latenciesWarm = [];
 async function foo(arr, offset) {
   for (let i = USER_OFFSET; i < users.length && i < USER_OFFSET + 100; ++i) {
-    const startTime = new Date();
+    const startTime = Date.now();
     const res = await fetch(BASE_URL);
 
     // const body = {
@@ -41,7 +41,7 @@ async function foo(arr, offset) {
 
     if (!res.ok) console.error(res.error);
     else console.log("Successfully hit");
-    arr.push(startTime - new Date());
+    arr.push(Date.now() - startTime);
   }
 }
 
@@ -59,7 +59,7 @@ foo(latencies, 0).then(() => {
 
           if (!res.ok) console.error(`${res.status}`, res);
           else console.info("Success async!");
-          arr.push(startTime - new Date());
+          arr.push(Date.now() - startTime);
         })()
       );
     }
