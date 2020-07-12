@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -87,10 +88,20 @@ newtype ScoreReader a =
     }
   deriving (Functor, Applicative, Monad, MonadReader (V.Vector ScoreRow))
 
+weightedSum x = add (x ^. impact) (add (scale 2 (add (x ^. presentation)(x ^. creativity))) (x ^. technicalComplexity))
+  where
+    scale i (MInt x) = MInt (fmap (*i) x)
+    add (MInt (Just x)) (MInt (Just y)) = MInt (Just (x + y))
+    add (MInt (Just x)) (MInt Nothing) = MInt (Just x)
+    add (MInt Nothing) (MInt (Just y)) = MInt (Just y)
 
 main = do
   d <- getDataL "scores.csv" :: IO [ScoreRow]
-  let g x = (x^.table.val, x^.sum.val)
+  let g x = (x^.table.val, (weightedSum x))
   putStrLn "(Table, Sum) (top 10)"
-  forM_ (g <$> take 10 (L.sortBy (flip compare `on` _sum) d))
-    (\(Just x,Just y) -> print (x,y))
+  let l = take 10 (L.sortBy (flip compare `on` _sum) d)
+  forM_ (g <$> l)
+    (\case
+       (Just x,(MInt (Just y))) -> print (x,y)
+       a -> print ("Incomplete row: " <> show a)
+    )
