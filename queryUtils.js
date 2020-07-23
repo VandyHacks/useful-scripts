@@ -13,13 +13,14 @@ const fs = require('fs');
  */
 function convertMongoDumpToArray(filepath) {
   // Get content from file
-  const contents = fs.readFileSync(filepath).toString();
-  const delim = '{"_id"';
-  const arr = contents.split(delim).map(e => delim + e.trim());
-  arr.shift(); // remove first elem
-  const result = JSON.parse(`{ "data": [${arr.toString()}]}`).data;
-  console.log(result.length + ' total records in ' + filepath);
-  return result;
+  const contents = JSON.parse(fs.readFileSync(filepath));
+  // const delim = '{"_id"';
+  // const arr = contents.split(delim).map(e => delim + e.trim());
+  // console.log(arr)
+  // arr.shift(); // remove first elem
+
+  console.log(contents.length + ' total records in ' + filepath);
+  return contents;
 }
 
 /**
