@@ -4,23 +4,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Main where
-import Prelude hiding (sum)
-import Control.Applicative
-import qualified Data.ByteString.Lazy as BL
-import Data.Csv
-import qualified Data.Vector as V
-import GHC.Generics hiding (to)
-import qualified Data.Text as T
-import Lens.Micro
-import Lens.Micro.TH
-import Control.Monad.Reader
-import Data.Function
-import qualified Data.Map as M
-import Data.IORef
-import Data.Maybe
 
+module Main where
+
+import           Control.Applicative
+import           Control.Monad
+import           Data.Csv
+import           Data.IORef
+import           Data.Maybe
+import           GHC.Generics
+import           Lens.Micro
+import           Lens.Micro.TH
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Map as M
+import qualified Data.Text as T
+import qualified Data.Vector as V
 import qualified Data.List as L
+
 data YN = Yes | No deriving (Generic, Show)
 
 instance FromField YN where
@@ -38,10 +38,11 @@ makeLenses ''MInt
 instance ToField MInt where
   toField (MInt Nothing) = ""
   toField (MInt (Just i)) = toField (show i)
-instance FromField MInt where
-  parseField s = MInt <$> optional (parseField s :: Parser Int)
 
-data Attendance = Here | NoShow deriving (Generic, Show)
+instance FromField MInt where
+  parseField s = MInt <$> optional (parseField s)
+
+data Attendance = Here | NoShow deriving (Show, Generic)
 
 instance ToField Attendance where
   toField Here = "Here"
@@ -70,51 +71,37 @@ instance FromRecord ScoreRow
 
 instance ToRecord ScoreRow
 
-weightedSum :: ScoreRow -> MInt Int
+weightedSum :: ScoreRow -> MInt
 weightedSum x = foldr (\s res -> add (x ^. s) . res) (add (MInt (Just 0))) selectors (MInt (Just 0))
   where
     selectors = [technicalAbility, utility, creativity, presentation, impression]
-    scale i (MInt x) = MInt (fmap (*i) x)
     add (MInt (Just x)) (MInt (Just y)) = MInt (Just (x + y))
-    add (MInt (Just x)) (MInt Nothing) = MInt (Just x)
-    add (MInt Nothing) (MInt (Just y)) = MInt (Just y)
     add _ _ = MInt Nothing
 
 getData s = do
   f <- BL.readFile s
-  let v = decode HasHeader f
-  case v of
-    Right l -> return l
+  case decode HasHeader f of
+    Right l -> pure l
     Left err -> error err
 
-getDataL s = V.toList <$> getData s
-
-newtype ScoreReader a =
-  ScoreReader
-    { runScoreReader :: Reader (V.Vector ScoreRow) a
-    }
-  deriving (Functor, Applicative, Monad, MonadReader (V.Vector ScoreRow))
-
-ins tNum score = M.insertWith f tNum (0,0)
+ins tNum score = M.adjust f tNum (0,0)
   where
-    f _ (count, acc) = (count + 1, acc + score)
+    f (count, acc) = (count + 1, acc + score)
 
 main = do
-  d <- getDataL "responses1.csv" :: IO [ScoreRow]
-  let g x = (x^.table.val, (weightedSum x))
+  dat <- V.toList <$> getData "responses1.csv"
+  let g x = (x^.table.val, weightedSum x)
   putStrLn "Table\tAverage Score"
-  let l = d
-  table <- newIORef mempty :: IO (IORef (M.Map Int (Int, Int)))
-  forM_ (g <$> l)
+  table <- newIORef mempty
+  forM_ (g <$> dat)
     (\case
        (Just x, MInt (Just y)) -> do
          t <- readIORef table
          when (isNothing (M.lookup x t))
-            (modifyIORef table (M.insert x (0,0)))
+           (modifyIORef table (M.insert x (0,0)))
          modifyIORef table (ins x y)
-       a -> pure ()
-    )
+       _ -> pure ())
   res <- readIORef table
-  let h (t,(c,s)) = (t,fromIntegral s / fromIntegral c)
-  let f (a,b) = putStrLn (show a <> "\t" <> show b)
+  let h (t, (c,s)) = (t,fromIntegral s / fromIntegral c)
+  let f (a, b) = putStrLn (show a <> "\t" <> show b)
   mapM_ f (L.take 20 (L.reverse (L.sortOn snd (h <$> M.toList res))))
