@@ -70,18 +70,15 @@ instance FromRecord ScoreRow
 
 instance ToRecord ScoreRow
 
-weightedSum :: ScoreRow -> MInt
-
-weightedSum x = add (x ^. technicalAbility)
-                    (add (add (x ^. utility) (x ^. creativity))
-                         (add (x ^. presentation) (x ^. impression)))
+weightedSum :: ScoreRow -> MInt Int
+weightedSum x = foldr (\s res -> add (x ^. s) . res) (add (MInt (Just 0))) selectors (MInt (Just 0))
   where
+    selectors = [technicalAbility, utility, creativity, presentation, impression]
     scale i (MInt x) = MInt (fmap (*i) x)
     add (MInt (Just x)) (MInt (Just y)) = MInt (Just (x + y))
     add (MInt (Just x)) (MInt Nothing) = MInt (Just x)
     add (MInt Nothing) (MInt (Just y)) = MInt (Just y)
     add _ _ = MInt Nothing
-
 
 getData s = do
   f <- BL.readFile s
@@ -103,9 +100,9 @@ ins tNum score = M.insertWith f tNum (0,0)
     f _ (count, acc) = (count + 1, acc + score)
 
 main = do
-  d <- getDataL "responses.csv" :: IO [ScoreRow]
+  d <- getDataL "responses1.csv" :: IO [ScoreRow]
   let g x = (x^.table.val, (weightedSum x))
-  putStrLn "(Table, Sum) (top 10)"
+  putStrLn "Table\tAverage Score"
   let l = d
   table <- newIORef mempty :: IO (IORef (M.Map Int (Int, Int)))
   forM_ (g <$> l)
@@ -119,4 +116,5 @@ main = do
     )
   res <- readIORef table
   let h (t,(c,s)) = (t,fromIntegral s / fromIntegral c)
-  mapM_ print (L.take 10 (L.reverse (L.sortOn snd (h <$> M.toList res))))
+  let f (a,b) = putStrLn (show a <> "\t" <> show b)
+  mapM_ f (L.take 20 (L.reverse (L.sortOn snd (h <$> M.toList res))))
