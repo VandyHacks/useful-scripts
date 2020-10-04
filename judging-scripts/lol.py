@@ -13,7 +13,6 @@ with open("submissions.csv") as f:
     id += 1
 print(id)
 
-res = 'y'
 judges = []
 jnames = ["Shalini Gupta", "Tim Eccleston", "Prof. Julie Johnson", "Prof. Catie Chang", "Eliott Fernando", "Michael Copeland", "Krish Munot", "Lucas Remedios", "Aleksandr Zakharov", "Arjun Sharma", "Irfaan", "Matt", "Dr. Molvig"]
 print(len(jnames))
@@ -27,7 +26,6 @@ for j in range(jn):
   judges[j] += f"{jnames[j]}: \n"
   for pid in pids:
     i = int(pid) - 1
-    print(i)
     judges[j] += f"- {projects[i]['url']}\n"
   judges[j] += "\n"
 
