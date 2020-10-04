@@ -25,18 +25,18 @@ data YN = Yes | No deriving (Generic, Show)
 
 instance FromField YN where
   parseField "Yes" = pure Yes
-  parseField "No" = pure No
-  parseField _ = mzero
+  parseField "No"  = pure No
+  parseField _     = mzero
 
 instance ToField YN where
   toField Yes = "Yes"
-  toField No = "No"
+  toField No  = "No"
 
 newtype MInt = MInt { _val :: Maybe Int } deriving (Show, Ord, Eq)
 makeLenses ''MInt
 
 instance ToField MInt where
-  toField (MInt Nothing) = ""
+  toField (MInt Nothing)  = ""
   toField (MInt (Just i)) = toField (show i)
 
 instance FromField MInt where
@@ -45,30 +45,28 @@ instance FromField MInt where
 data Attendance = Here | NoShow deriving (Show, Generic)
 
 instance ToField Attendance where
-  toField Here = "Here"
+  toField Here   = "Here"
   toField NoShow = "No show"
 
 instance FromField Attendance where
-  parseField "Here" = pure Here
+  parseField "Here"    = pure Here
   parseField "No show" = pure NoShow
 
 data ScoreRow = ScoreRow
-    { _timestamp   :: !T.Text
-    , _name :: !T.Text
-    , _table :: !MInt
-    , _technicalAbility :: !MInt
-    , _creativity :: !MInt
-    , _utility :: !MInt
-    , _presentation :: !MInt
-    , _impression :: !MInt
+    { _timestamp          :: !T.Text
+    , _name               :: !T.Text
+    , _table              :: !MInt
+    , _technicalAbility   :: !MInt
+    , _creativity         :: !MInt
+    , _utility            :: !MInt
+    , _presentation       :: !MInt
+    , _impression         :: !MInt
     , _additionalComments :: !T.Text
     }
     deriving (Generic, Show)
 
 makeLenses ''ScoreRow
-
 instance FromRecord ScoreRow
-
 instance ToRecord ScoreRow
 
 weightedSum :: ScoreRow -> MInt
