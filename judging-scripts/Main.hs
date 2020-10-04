@@ -16,6 +16,9 @@ import Lens.Micro
 import Lens.Micro.TH
 import Control.Monad.Reader
 import Data.Function
+import qualified Data.Map as M
+import Data.IORef
+import Data.Maybe
 
 import qualified Data.List as L
 data YN = Yes | No deriving (Generic, Show)
@@ -52,18 +55,12 @@ data ScoreRow = ScoreRow
     { _timestamp   :: !T.Text
     , _name :: !T.Text
     , _table :: !MInt
-    , _attendance :: !Attendance
-    , _isBeginner :: !YN
-    , _technicalComplexity :: !MInt
+    , _technicalAbility :: !MInt
     , _creativity :: !MInt
-    , _impact :: !MInt
+    , _utility :: !MInt
     , _presentation :: !MInt
-    , _judgeImpression :: !MInt
-    , _comments :: !T.Text
-    , _sum :: !MInt
-    , _finalists ::  !T.Text
-    , _notes :: !T.Text
-    , _beg :: !MInt
+    , _impression :: !MInt
+    , _additionalComments :: !T.Text
     }
     deriving (Generic, Show)
 
@@ -72,6 +69,19 @@ makeLenses ''ScoreRow
 instance FromRecord ScoreRow
 
 instance ToRecord ScoreRow
+
+weightedSum :: ScoreRow -> MInt
+
+weightedSum x = add (x ^. technicalAbility)
+                    (add (add (x ^. utility) (x ^. creativity))
+                         (add (x ^. presentation) (x ^. impression)))
+  where
+    scale i (MInt x) = MInt (fmap (*i) x)
+    add (MInt (Just x)) (MInt (Just y)) = MInt (Just (x + y))
+    add (MInt (Just x)) (MInt Nothing) = MInt (Just x)
+    add (MInt Nothing) (MInt (Just y)) = MInt (Just y)
+    add _ _ = MInt Nothing
+
 
 getData s = do
   f <- BL.readFile s
@@ -88,20 +98,25 @@ newtype ScoreReader a =
     }
   deriving (Functor, Applicative, Monad, MonadReader (V.Vector ScoreRow))
 
-weightedSum x = add (x ^. impact) (add (scale 2 (add (x ^. presentation)(x ^. creativity))) (x ^. technicalComplexity))
+ins tNum score = M.insertWith f tNum (0,0)
   where
-    scale i (MInt x) = MInt (fmap (*i) x)
-    add (MInt (Just x)) (MInt (Just y)) = MInt (Just (x + y))
-    add (MInt (Just x)) (MInt Nothing) = MInt (Just x)
-    add (MInt Nothing) (MInt (Just y)) = MInt (Just y)
+    f _ (count, acc) = (count + 1, acc + score)
 
 main = do
-  d <- getDataL "scores.csv" :: IO [ScoreRow]
+  d <- getDataL "responses.csv" :: IO [ScoreRow]
   let g x = (x^.table.val, (weightedSum x))
   putStrLn "(Table, Sum) (top 10)"
-  let l = take 10 (L.sortBy (flip compare `on` _sum) d)
+  let l = d
+  table <- newIORef mempty :: IO (IORef (M.Map Int (Int, Int)))
   forM_ (g <$> l)
     (\case
-       (Just x,(MInt (Just y))) -> print (x,y)
-       a -> print ("Incomplete row: " <> show a)
+       (Just x, MInt (Just y)) -> do
+         t <- readIORef table
+         when (isNothing (M.lookup x t))
+            (modifyIORef table (M.insert x (0,0)))
+         modifyIORef table (ins x y)
+       a -> pure ()
     )
+  res <- readIORef table
+  let h (t,(c,s)) = (t,fromIntegral s / fromIntegral c)
+  mapM_ print (L.take 10 (L.reverse (L.sortOn snd (h <$> M.toList res))))

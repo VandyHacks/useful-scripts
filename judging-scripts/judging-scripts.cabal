@@ -28,7 +28,8 @@ executable judging-scripts
                        text,
                        microlens,
                        microlens-th,
-                       mtl
+                       mtl,
+                       containers
 
   -- hs-source-dirs:
   default-language:    Haskell2010
