@@ -3,7 +3,6 @@
 
 module Main where
 
-import           Control.Applicative
 import           Control.Monad
 import qualified Data.ByteString.Lazy as BL
 import           Data.Csv
@@ -12,7 +11,6 @@ import qualified Data.List            as L
 import qualified Data.Map             as M
 import           Data.Maybe
 import           Data.Ord
-import qualified Data.Text            as T
 import           Lens.Micro
 import           Types
 
